@@ -4,7 +4,6 @@ import java.time.*
 fun main(args: Array<String>) {
 
 }
-
 data class Post(
     var id: Int = 0,
     val ownerId: Int = 0,
@@ -15,14 +14,14 @@ data class Post(
     val replyOwnerId: Int = 0,
     val replyPostId: Int = 0,
     val friendsOnly: Boolean = false,
-    var comments: Comments = Comments(),
+    var comments:Comments = Comments(),
     val copyright: String = "$ownerId",
     val likes: Likes? = Likes(),
     val reposts: Reposts? = Reposts(),
     val views: Int = 0,
     val postType: PostType = PostType.POST,
     val postSource: PostSource? = PostSource(),
-    val attachments: Array<Attachments>? = emptyArray<Attachments>(),
+    val attachments: Array<Attachments> = emptyArray<Attachments>(),
     val geo: Geo? = Geo(),
     val signerId: Int = 0,
     //val copyHistory: Array<Post> = emptyArray<Post>(),
@@ -67,11 +66,11 @@ open abstract class Attachments(
     open val type: String
 )
 
-class AttachmentsPhoto(override val type: String = "photo", val photo: Photo) : Attachments(type)
-class AttachmentsVideo(override val type: String = "video", val video: Video) : Attachments(type)
-class AttachmentsAudio(override val type: String = "audio", val audio: Audio) : Attachments(type)
-class AttachmentsDoc(override val type: String = "doc", val doc: Doc) : Attachments(type)
-class AttachmentsNote(override val type: String = "note", val note: Note) : Attachments(type)
+data class AttachmentsPhoto(override val type: String = "photo", val photo: Photo) : Attachments(type)
+data class AttachmentsVideo(override val type: String = "video", val video: Video) : Attachments(type)
+data class AttachmentsAudio(override val type: String = "audio", val audio: Audio) : Attachments(type)
+data class AttachmentsDoc(override val type: String = "doc", val doc: Doc) : Attachments(type)
+data class AttachmentsNote(override val type: String = "note", val note: Note) : Attachments(type)
 
 class Photo(
     val id: Int,
@@ -153,10 +152,31 @@ class Note(
     val viewUrl: URL
 ) {}
 
+class Comment(
+    val id: Int,
+    val fromId: Int,
+    val date: LocalDate,
+    val text: String,
+//    val donut: Donut = Donut(),
+    val replyToUser: Int,
+    val replyToComment: Int,
+    val attachments: Array<Attachments> = emptyArray<Attachments>(),
+    val parentsStack: Array<Int> = emptyArray<Int>(),
+    val threadComments: ThreadComments = ThreadComments()
+){
+    class ThreadComments(
+        val count: Int = 0,
+        val items: Array<Comment> = emptyArray<Comment>(),
+        val canPost: Boolean = true,
+        val showReplyButton: Boolean = true,
+        val groupsCanPost: Boolean = true
+    )
+}
 
 object WallService {
     private var posts = emptyArray<Post>() //массив хранения постов
     private var uniqId: Int = 0 //уникальный айди поста
+    private var comments = emptyArray<Comment>()
     fun add(post: Post): Post { // добавляем пост в массив с присвоением уникального айди и начальной записи
         uniqId++
         post.id = uniqId
@@ -176,8 +196,21 @@ object WallService {
         return update
     }
 
+    fun createComment(postId: Int, comment: Comment): Comment{
+        var isFoundPost = false
+        for (post in posts){
+            if (post.id == postId)
+                comments += comment
+                isFoundPost = true
+        }
+        if(!isFoundPost) throw PostNotFoundException("Post not found")
+        return comments.last()
+    }
+
     fun clear() {
         posts = emptyArray()
         uniqId = 0// также здесь нужно сбросить счетчик для id постов, если он у вас используется
     }
 }
+
+class PostNotFoundException(message: String): Exception(message)
