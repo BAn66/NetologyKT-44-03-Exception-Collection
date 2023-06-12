@@ -2,7 +2,26 @@ import java.net.URL
 import java.time.*
 
 fun main(args: Array<String>) {
-
+//    val postBeforeAdd1: Post = Post(ownerId = 1)
+//    val postBeforeAdd2: Post = Post(ownerId = 2)
+//    val postBeforeAdd3: Post = Post(ownerId = 3)
+//    val post1: Post = WallService.add(postBeforeAdd1)
+//    val post2: Post = WallService.add(postBeforeAdd2)
+//    val post3: Post = WallService.add(postBeforeAdd3)
+//    val comment: Comment = Comment(
+//        1,
+//        1,
+//        LocalDate.now(),
+//        "Первый!!!!111",
+//        0,
+//        0,
+//        emptyArray<Attachments>(),
+//        emptyArray<Int>(),
+//        Comment.ThreadComments()
+//    )
+//
+//    val commentInPost: Comment = WallService.createComment(2, comment)
+//    println(commentInPost.id)
 }
 data class Post(
     var id: Int = 0,
@@ -153,13 +172,13 @@ class Note(
 ) {}
 
 class Comment(
-    val id: Int,
+    var id: Int = 0,
     val fromId: Int,
-    val date: LocalDate,
+    val date: LocalDate = LocalDate.now(),
     val text: String,
 //    val donut: Donut = Donut(),
-    val replyToUser: Int,
-    val replyToComment: Int,
+    val replyToUser: Int = 0,
+    val replyToComment: Int = 0,
     val attachments: Array<Attachments> = emptyArray<Attachments>(),
     val parentsStack: Array<Int> = emptyArray<Int>(),
     val threadComments: ThreadComments = ThreadComments()
@@ -177,6 +196,7 @@ object WallService {
     private var posts = emptyArray<Post>() //массив хранения постов
     private var uniqId: Int = 0 //уникальный айди поста
     private var comments = emptyArray<Comment>()
+    private var uniqIdComment = 0
     fun add(post: Post): Post { // добавляем пост в массив с присвоением уникального айди и начальной записи
         uniqId++
         post.id = uniqId
@@ -199,12 +219,16 @@ object WallService {
     fun createComment(postId: Int, comment: Comment): Comment{
         var isFoundPost = false
         for (post in posts){
-            if (post.id == postId)
-                comments += comment
+            if (post.id == postId) {
+                uniqIdComment++
+                comment.id = uniqIdComment
                 isFoundPost = true
+                comments += comment
+            }
         }
         if(!isFoundPost) throw PostNotFoundException("Post not found")
-        return comments.last()
+        //return comments.last()
+        return comment
     }
 
     fun clear() {
