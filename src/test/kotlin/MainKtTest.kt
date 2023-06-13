@@ -69,7 +69,7 @@ class WallServiceTest {
         val comment:Comment = Comment(fromId = 1, text = "Первый!!!!111")
         //act
         val commentInPost:Comment = WallService.createComment(2, comment)
-        //
+        //assert
         assertEquals(comment.text, commentInPost.text)
     }
 
@@ -87,4 +87,62 @@ class WallServiceTest {
         val commentInPost:Comment = WallService.createComment(5, comment)
 
         }
+
+    @Test
+    fun createReportComment(){
+        //arrange
+        val postBeforeAdd1:Post = Post(ownerId = 1)
+        val postBeforeAdd2:Post = Post(ownerId = 2)
+        val postBeforeAdd3:Post = Post(ownerId = 3)
+        val post1:Post = WallService.add(postBeforeAdd1)
+        val post2:Post = WallService.add(postBeforeAdd2)
+        val post3:Post = WallService.add(postBeforeAdd3)
+        val comment1:Comment = Comment(fromId = 1, text = "Первый!!!!111")
+        val comment2:Comment = Comment(fromId = 2, text = "Второй")
+        val comment3:Comment = Comment(fromId = 3, text = "Третий, автор ты Козел")
+        val commentInPost1:Comment = WallService.createComment(2, comment1)
+        val commentInPost2:Comment = WallService.createComment(2, comment2)
+        val commentInPost3:Comment = WallService.createComment(2, comment3)
+        //act
+        var result: Int = WallService.createReportComment(commentInPost3.id, ReportComment.ReasonReport.ABUSE)
+        //assert
+        assertEquals(1, result)
+    }
+
+    @Test(expected = SomethingWrongException::class)
+    fun createReportCommentExceptionWithoutComment(){
+        //arrange
+        val postBeforeAdd1:Post = Post(ownerId = 1)
+        val postBeforeAdd2:Post = Post(ownerId = 2)
+        val postBeforeAdd3:Post = Post(ownerId = 3)
+        val post1:Post = WallService.add(postBeforeAdd1)
+        val post2:Post = WallService.add(postBeforeAdd2)
+        val post3:Post = WallService.add(postBeforeAdd3)
+        val comment1:Comment = Comment(fromId = 1, text = "Первый!!!!111")
+        val comment2:Comment = Comment(fromId = 2, text = "Второй")
+        val comment3:Comment = Comment(fromId = 3, text = "Третий, автор ты Козел")
+        val commentInPost1:Comment = WallService.createComment(2, comment1)
+        val commentInPost2:Comment = WallService.createComment(2, comment2)
+        val commentInPost3:Comment = WallService.createComment(2, comment3)
+        //act
+        var result: Int = WallService.createReportComment(10, ReportComment.ReasonReport.ABUSE)
+    }
+    @Test(expected = SomethingWrongException::class)
+    fun createReportCommentExceptionWithoutReason(){
+        //arrange
+        val postBeforeAdd1:Post = Post(ownerId = 1)
+        val postBeforeAdd2:Post = Post(ownerId = 2)
+        val postBeforeAdd3:Post = Post(ownerId = 3)
+        val post1:Post = WallService.add(postBeforeAdd1)
+        val post2:Post = WallService.add(postBeforeAdd2)
+        val post3:Post = WallService.add(postBeforeAdd3)
+        val comment1:Comment = Comment(fromId = 1, text = "Первый!!!!111")
+        val comment2:Comment = Comment(fromId = 2, text = "Второй")
+        val comment3:Comment = Comment(fromId = 3, text = "Третий, автор ты Козел")
+        val commentInPost1:Comment = WallService.createComment(2, comment1)
+        val commentInPost2:Comment = WallService.createComment(2, comment2)
+        val commentInPost3:Comment = WallService.createComment(2, comment3)
+        //act
+        var result: Int = WallService.createReportComment(commentInPost3.id, null)
+    }
 }

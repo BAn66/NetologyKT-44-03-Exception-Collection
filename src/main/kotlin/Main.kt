@@ -2,26 +2,24 @@ import java.net.URL
 import java.time.*
 
 fun main(args: Array<String>) {
-//    val postBeforeAdd1: Post = Post(ownerId = 1)
-//    val postBeforeAdd2: Post = Post(ownerId = 2)
-//    val postBeforeAdd3: Post = Post(ownerId = 3)
-//    val post1: Post = WallService.add(postBeforeAdd1)
-//    val post2: Post = WallService.add(postBeforeAdd2)
-//    val post3: Post = WallService.add(postBeforeAdd3)
-//    val comment: Comment = Comment(
-//        1,
-//        1,
-//        LocalDate.now(),
-//        "Первый!!!!111",
-//        0,
-//        0,
-//        emptyArray<Attachments>(),
-//        emptyArray<Int>(),
-//        Comment.ThreadComments()
-//    )
-//
-//    val commentInPost: Comment = WallService.createComment(2, comment)
-//    println(commentInPost.id)
+//arrange
+    val postBeforeAdd1:Post = Post(ownerId = 1)
+    val postBeforeAdd2:Post = Post(ownerId = 2)
+    val postBeforeAdd3:Post = Post(ownerId = 3)
+    val post1:Post = WallService.add(postBeforeAdd1)
+    val post2:Post = WallService.add(postBeforeAdd2)
+    val post3:Post = WallService.add(postBeforeAdd3)
+    val comment1:Comment = Comment(fromId = 1, text = "Первый!!!!111")
+    val comment2:Comment = Comment(fromId = 2, text = "Второй")
+    val comment3:Comment = Comment(fromId = 3, text = "Третий, автор ты Козел")
+    val commentInPost1:Comment = WallService.createComment(2, comment1)
+    val commentInPost2:Comment = WallService.createComment(2, comment2)
+    val commentInPost3:Comment = WallService.createComment(2, comment3)
+    println(commentInPost3.id)
+    //act
+    var result: Int = WallService.createReportComment(commentInPost3.id, ReportComment.ReasonReport.ABUSE)
+    println(result)
+    //assert
 }
 data class Post(
     var id: Int = 0,
@@ -192,12 +190,29 @@ class Comment(
     )
 }
 
+class ReportComment(
+    var ownerId: Int = 0,
+    val commentId: Int = 0,
+    var reason: ReasonReport?
+){
+    enum class ReasonReport(value: Int){
+        SPAM(0),
+        PORN(1),
+        EXTIMIZM(2),
+        DRUGS(4),
+        ADULT(5),
+        ABUSE(6),
+        SUICAID(8)
+    }
+}
+
 object WallService {
     private var posts = emptyArray<Post>() //массив хранения постов
     private var uniqId: Int = 0 //уникальный айди поста
     private var comments = emptyArray<Comment>()
+    private var reportComments = emptyArray<ReportComment>()
     private var uniqIdComment = 0
-    fun add(post: Post): Post { // добавляем пост в массив с присвоением уникального айди и начальной записи
+        fun add(post: Post): Post { // добавляем пост в массив с присвоением уникального айди и начальной записи
         uniqId++
         post.id = uniqId
         post.text = "Запись #$uniqId"
@@ -231,10 +246,25 @@ object WallService {
         return comment
     }
 
+    fun createReportComment(commentId: Int, reasonReport: ReportComment.ReasonReport?): Int{
+        val rReport = reasonReport ?: throw SomethingWrongException("Не указана причина репорта")
+        var isFoundComment = false
+        for (comment in comments){
+            if (comment.id == commentId) {
+               isFoundComment = true
+               reportComments += ReportComment(comment.fromId, commentId , rReport)
+            }
+        }
+        if(!isFoundComment) throw SomethingWrongException("Comment not found")
+        return 1
+    }
+
+
     fun clear() {
         posts = emptyArray()
         uniqId = 0// также здесь нужно сбросить счетчик для id постов, если он у вас используется
     }
 }
 
-class PostNotFoundException(message: String): Exception(message)
+class PostNotFoundException(message: String): SomethingWrongException(message)
+open class SomethingWrongException(message: String): Exception(message)
