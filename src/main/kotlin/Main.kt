@@ -169,7 +169,7 @@ class Note(
     val viewUrl: URL
 ) {}
 
-class Comment(
+data class Comment(
     var id: Int = 0,
     val fromId: Int,
     val date: LocalDate = LocalDate.now(),
@@ -190,7 +190,7 @@ class Comment(
     )
 }
 
-class ReportComment(
+data class ReportComment(
     var ownerId: Int = 0,
     val commentId: Int = 0,
     var reason: ReasonReport?
@@ -238,7 +238,7 @@ object WallService {
                 uniqIdComment++
                 comment.id = uniqIdComment
                 isFoundPost = true
-                comments += comment
+                comments += comment.copy()// лучше копировать, чтоб не могли изменить извне сам комментарий который передается в параметры
             }
         }
         if(!isFoundPost) throw PostNotFoundException("Post not found")
