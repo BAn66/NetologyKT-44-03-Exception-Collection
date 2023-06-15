@@ -274,48 +274,115 @@ object WallService {
 object NoteService {
 
     private var notes = mutableListOf<Note>()
+
     private var uniqId: Int = 0
-    private var comments = mutableListOf<Comment>()
+    private var noteComments = mutableListOf<Comment>()
     private var uniqIdComment = 0
 
-    fun add(note: Note){
+    fun add(note: Note) {
         uniqId++
         note.id = uniqId
         note.text = "Примечание #$uniqId"
-        notes.add(note)
-    }//Создает новую заметку у текущего пользователя, возвращает уникальный индетефикатор запси ID.
-    fun createComment(comment: Comment){
+        notes.add(note.copy())
+    }//Создает новую заметку у текущего пользователя.
+
+    fun createComment(comment: Comment) {
         uniqIdComment++
         comment.id = uniqIdComment
         comment.text = "Комментарий #$uniqId"
-        comments.add(comment)
-    }//Добавляет новый комментарий к заметке,  возвращает уникальный индетефикатор запси ID.
-    fun delete(idNote: Int){
-        try {
-            notes.removeAt(idNote)
-        } catch (e: IndexOutOfBoundsException ){
-            throw SomethingWrongException("Такой заметки нет: ${e.message}")
+        noteComments.add(comment.copy())
+    }//Добавляет новый комментарий к заметке.
+
+    fun delete(idNote: Int) {
+        var indexNote: Int = 0
+        for (note in notes) {
+            if (note.id == idNote) {
+                indexNote = notes.indexOf(note)
+            } else throw SomethingWrongException("Такой записи нет")
         }
+        notes.removeAt(indexNote)
     }//Удаляет заметку текущего пользователя.
-    fun deleteComment (idComment: Int){
-        (comments.getOrNull(idComment) ?: throw SomethingWrongException("Такого комментария нет")).isDeleted = true
+
+    fun deleteComment(idComment: Int) {
+        for (comment in noteComments) {
+            if (comment.id == idComment) {
+                comment.isDeleted = true
+            } else throw SomethingWrongException("Такого комментария нет")
+        }
     }//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
 
-    fun edit(idNote: Int, newText: String){
-        (notes.getOrNull(idNote)?: throw SomethingWrongException("Такой заметки нет")).text = newText
+    fun edit(idNote: Int, newText: String) {
+        var indexNote: Int = 0
+        for (note in notes) {
+            if (note.id == idNote) {
+                indexNote = notes.indexOf(note)
+            }
+        }
+        (notes.getOrNull(indexNote) ?: throw SomethingWrongException("Такого комментария нет")).text = newText
     }//Редактирует заметку текущего пользователя, заменяет текст
 
-    fun editComment (){TODO()}//Редактирует указанный комментарий у заметки.
+    fun editComment(idComment: Int, newText: String) {
+        var editedComment =
+            (comments.getOrNull(idComment) ?: throw SomethingWrongException("Такого комментария нет")).copy()
+        if (!editedComment.isDeleted) {
+            editedComment.text = newText
+            comments[idComment] = editedComment
+        } else throw SomethingWrongException("Данный комментарий удален")
+    }//Редактирует указанный комментарий у заметки.
 
-    fun get (){TODO()}//Возвращает список заметок, созданных пользователем.
+    fun get(): MutableList<Note> {
+        return notes
+    }//Возвращает список заметок, созданных пользователем.
 
-    fun getById (){TODO()}//Возвращает заметку по её id.
+    fun getById(idNote: Int): Note {
+        var indexNote: Int = 0
+        for (note in notes) {
+            if (note.id == idNote) {
+                indexNote = notes.indexOf(note)
+            } else throw SomethingWrongException("Такой записи нет")
+        }
+        return notes.getOrNull(indexNote) ?: throw SomethingWrongException("Такой записи нет")
+    }//Возвращает заметку по её id.
 
-    fun getComments (){TODO()}//Возвращает список комментариев к заметке.
+    fun getComments() {
+        TODO()
+    }//Возвращает список комментариев к заметке.
 
-    fun getFriendsNotes (){TODO()}//Возвращает список заметок друзей пользователя.
+    fun getFriendsNotes() {
+        TODO()
+    }//Возвращает список заметок друзей пользователя.
 
-    fun restoreComment(){TODO()}//Восстанавливает удалённый комментарий.
+    fun restoreComment() {
+        TODO()
+    }//
+
+    fun clear() {
+        notes.removeAll(notes)
+        uniqId = 0
+        noteComments.removeAll(noteComments)
+        uniqIdComment = 0
+        // также здесь нужно сбросить счетчик для id постов, если он у вас используется
+    }
+
+    fun getIndexNoteById(idNote: Int): Int {
+        var indexNote: Int = 0
+        for (note in notes) {
+            if (note.id == idNote) {
+                indexNote = notes.indexOf(note)
+            } else throw SomethingWrongException("Такой записи нет")
+        }
+        return indexNote
+    }
+
+    fun getIndexCommentById(idComment: Int): Int {
+        var indexComment: Int = 0
+        for (comment in noteComments) {
+            if (comment.id == idComment) {
+                indexComment = noteComments.indexOf(comment)
+            } else throw SomethingWrongException("Такой записи нет")
+        }
+        return indexComment
+    }
 }
 
 class PostNotFoundException(message: String) : SomethingWrongException(message)
