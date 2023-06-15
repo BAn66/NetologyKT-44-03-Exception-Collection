@@ -3,24 +3,25 @@ import java.time.*
 
 fun main(args: Array<String>) {
 //arrange
-    val postBeforeAdd1:Post = Post(ownerId = 1)
-    val postBeforeAdd2:Post = Post(ownerId = 2)
-    val postBeforeAdd3:Post = Post(ownerId = 3)
-    val post1:Post = WallService.add(postBeforeAdd1)
-    val post2:Post = WallService.add(postBeforeAdd2)
-    val post3:Post = WallService.add(postBeforeAdd3)
-    val comment1:Comment = Comment(fromId = 1, text = "Первый!!!!111")
-    val comment2:Comment = Comment(fromId = 2, text = "Второй")
-    val comment3:Comment = Comment(fromId = 3, text = "Третий, автор ты Козел")
-    val commentInPost1:Comment = WallService.createComment(2, comment1)
-    val commentInPost2:Comment = WallService.createComment(2, comment2)
-    val commentInPost3:Comment = WallService.createComment(2, comment3)
+    val postBeforeAdd1: Post = Post(ownerId = 1)
+    val postBeforeAdd2: Post = Post(ownerId = 2)
+    val postBeforeAdd3: Post = Post(ownerId = 3)
+    val post1: Post = WallService.add(postBeforeAdd1)
+    val post2: Post = WallService.add(postBeforeAdd2)
+    val post3: Post = WallService.add(postBeforeAdd3)
+    val comment1: Comment = Comment(fromId = 1, text = "Первый!!!!111")
+    val comment2: Comment = Comment(fromId = 2, text = "Второй")
+    val comment3: Comment = Comment(fromId = 3, text = "Третий, автор ты Козел")
+    val commentInPost1: Comment = WallService.createComment(2, comment1)
+    val commentInPost2: Comment = WallService.createComment(2, comment2)
+    val commentInPost3: Comment = WallService.createComment(2, comment3)
     println(commentInPost3.id)
     //act
     var result: Int = WallService.createReportComment(commentInPost3.id, ReportComment.ReasonReport.ABUSE)
     println(result)
     //assert
 }
+
 data class Post(
     var id: Int = 0,
     val ownerId: Int = 0,
@@ -31,7 +32,7 @@ data class Post(
     val replyOwnerId: Int = 0,
     val replyPostId: Int = 0,
     val friendsOnly: Boolean = false,
-    var comments:Comments = Comments(),
+    var comments: Comments = Comments(),
     val copyright: String = "$ownerId",
     val likes: Likes? = Likes(),
     val reposts: Reposts? = Reposts(),
@@ -158,29 +159,33 @@ class Doc(
     val type: Int = 1
 ) {}
 
-class Note(
-    val id: Int,
-    val ownerId: Int,
-    val title: String,
-    val text: String,
-    val date: LocalDate,
-    val comments: Int,
-    val readComments: Int,
-    val viewUrl: URL
+data class Note(
+    var id: Int = 0,
+    val ownerId: Int = 0,
+    val title: String = "empty tittle",
+    var text: String = "empty text",
+    val date: LocalDate = LocalDate.now(),
+    val comments: Int = 0,
+    val readComments: Int = 0,
+    val viewUrl: URL = URL("localhost"),
+    val privacyView: Boolean = true,
+    val canComment: Boolean = true,
+    val textWiki: String = "_"
 ) {}
 
 data class Comment(
     var id: Int = 0,
-    val fromId: Int,
+    val fromId: Int = 0,
     val date: LocalDate = LocalDate.now(),
-    val text: String,
+    var text: String = "empty comment",
 //    val donut: Donut = Donut(),
     val replyToUser: Int = 0,
     val replyToComment: Int = 0,
     val attachments: Array<Attachments> = emptyArray<Attachments>(),
     val parentsStack: Array<Int> = emptyArray<Int>(),
-    val threadComments: ThreadComments = ThreadComments()
-){
+    val threadComments: ThreadComments = ThreadComments(),
+    var isDeleted: Boolean = false
+) {
     class ThreadComments(
         val count: Int = 0,
         val items: Array<Comment> = emptyArray<Comment>(),
@@ -194,8 +199,8 @@ data class ReportComment(
     var ownerId: Int = 0,
     val commentId: Int = 0,
     var reason: ReasonReport?
-){
-    enum class ReasonReport(value: Int){
+) {
+    enum class ReasonReport(value: Int) {
         SPAM(0),
         PORN(1),
         EXTIMIZM(2),
@@ -212,7 +217,7 @@ object WallService {
     private var comments = emptyArray<Comment>()
     private var reportComments = emptyArray<ReportComment>()
     private var uniqIdComment = 0
-        fun add(post: Post): Post { // добавляем пост в массив с присвоением уникального айди и начальной записи
+    fun add(post: Post): Post { // добавляем пост в массив с присвоением уникального айди и начальной записи
         uniqId++
         post.id = uniqId
         post.text = "Запись #$uniqId"
@@ -231,9 +236,9 @@ object WallService {
         return update
     }
 
-    fun createComment(postId: Int, comment: Comment): Comment{
+    fun createComment(postId: Int, comment: Comment): Comment {
         var isFoundPost = false
-        for (post in posts){
+        for (post in posts) {
             if (post.id == postId) {
                 uniqIdComment++
                 comment.id = uniqIdComment
@@ -241,21 +246,21 @@ object WallService {
                 comments += comment.copy()// лучше копировать, чтоб не могли изменить извне сам комментарий который передается в параметры
             }
         }
-        if(!isFoundPost) throw PostNotFoundException("Post not found")
+        if (!isFoundPost) throw PostNotFoundException("Post not found")
         //return comments.last()
         return comment
     }
 
-    fun createReportComment(commentId: Int, reasonReport: ReportComment.ReasonReport?): Int{
+    fun createReportComment(commentId: Int, reasonReport: ReportComment.ReasonReport?): Int {
         val rReport = reasonReport ?: throw SomethingWrongException("Не указана причина репорта")
         var isFoundComment = false
-        for (comment in comments){
+        for (comment in comments) {
             if (comment.id == commentId) {
-               isFoundComment = true
-               reportComments += ReportComment(comment.fromId, commentId , rReport)
+                isFoundComment = true
+                reportComments += ReportComment(comment.fromId, commentId, rReport)
             }
         }
-        if(!isFoundComment) throw SomethingWrongException("Comment not found")
+        if (!isFoundComment) throw SomethingWrongException("Comment not found")
         return 1
     }
 
@@ -266,5 +271,52 @@ object WallService {
     }
 }
 
-class PostNotFoundException(message: String): SomethingWrongException(message)
-open class SomethingWrongException(message: String): Exception(message)
+object NoteService {
+
+    private var notes = mutableListOf<Note>()
+    private var uniqId: Int = 0
+    private var comments = mutableListOf<Comment>()
+    private var uniqIdComment = 0
+
+    fun add(note: Note){
+        uniqId++
+        note.id = uniqId
+        note.text = "Примечание #$uniqId"
+        notes.add(note)
+    }//Создает новую заметку у текущего пользователя, возвращает уникальный индетефикатор запси ID.
+    fun createComment(comment: Comment){
+        uniqIdComment++
+        comment.id = uniqIdComment
+        comment.text = "Комментарий #$uniqId"
+        comments.add(comment)
+    }//Добавляет новый комментарий к заметке,  возвращает уникальный индетефикатор запси ID.
+    fun delete(idNote: Int){
+        try {
+            notes.removeAt(idNote)
+        } catch (e: IndexOutOfBoundsException ){
+            throw SomethingWrongException("Такой заметки нет: ${e.message}")
+        }
+    }//Удаляет заметку текущего пользователя.
+    fun deleteComment (idComment: Int){
+        (comments.getOrNull(idComment) ?: throw SomethingWrongException("Такого комментария нет")).isDeleted = true
+    }//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
+
+    fun edit(idNote: Int, newText: String){
+        (notes.getOrNull(idNote)?: throw SomethingWrongException("Такой заметки нет")).text = newText
+    }//Редактирует заметку текущего пользователя, заменяет текст
+
+    fun editComment (){TODO()}//Редактирует указанный комментарий у заметки.
+
+    fun get (){TODO()}//Возвращает список заметок, созданных пользователем.
+
+    fun getById (){TODO()}//Возвращает заметку по её id.
+
+    fun getComments (){TODO()}//Возвращает список комментариев к заметке.
+
+    fun getFriendsNotes (){TODO()}//Возвращает список заметок друзей пользователя.
+
+    fun restoreComment(){TODO()}//Восстанавливает удалённый комментарий.
+}
+
+class PostNotFoundException(message: String) : SomethingWrongException(message)
+open class SomethingWrongException(message: String) : Exception(message)
