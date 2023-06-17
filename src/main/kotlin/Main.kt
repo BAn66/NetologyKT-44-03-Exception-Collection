@@ -296,22 +296,21 @@ object NoteService {
         return noteComments.last()
     }
 
-    fun delete(idNote: Int) {//Удаляет заметку текущего пользователя.
-        var indexNote: Int = 0
-        for (note in notes) {
-            if (note.id == idNote) {
-                indexNote = notes.indexOf(note)
-            } else throw SomethingWrongException("Такой записи нет")
-        }
-        notes.removeAt(indexNote)
-    }
+    fun delete(idNote: Int): Boolean {//Удаляет заметку текущего пользователя и НАВСЕГДА удаляет из массива комментарии к этой записи)
+        var indexNote: Int = getIndexNoteById(idNote)
 
-    fun deleteComment(idComment: Int) {//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
-        for (comment in noteComments) {
-            if (comment.id == idComment) {
-                comment.isDeleted = true
-            } else throw SomethingWrongException("Такого комментария нет")
+        val newCommentsList: MutableList<Comment> = mutableListOf<Comment>()
+
+        for (comment in noteComments){
+            if(comment.fromId != idNote){
+                newCommentsList.add(comment)
+            }
         }
+        noteComments = newCommentsList
+        return notes.remove(notes[indexNote])
+    }
+    fun deleteComment(idComment: Int) {//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
+        noteComments[getIndexCommentById(idComment)].isDeleted = true
     }
 
     fun edit(idNote: Int, newText: String) {//Редактирует заметку текущего пользователя, заменяет текст
@@ -323,8 +322,7 @@ object NoteService {
 
     fun editComment(idComment: Int, newText: String) {//Редактирует указанный комментарий у заметки.
         val indexEditedComment = getIndexCommentById(idComment)
-        val editedComment = (noteComments.getOrNull(indexEditedComment)
-            ?: throw SomethingWrongException("Такого комментария нет")).copy()
+        val editedComment = noteComments[indexEditedComment].copy()
         if (!editedComment.isDeleted) {
             editedComment.text = newText
             noteComments[indexEditedComment] = editedComment
@@ -332,12 +330,13 @@ object NoteService {
     }
 
     fun get(): MutableList<Note> {//Возвращает список заметок, созданных пользователем.
-        return notes
+        val notesReturn = mutableListOf<Note>()
+        notesReturn.addAll(notes)
+        return notesReturn
     }
 
     fun getById(idNote: Int): Note {//Возвращает заметку по её id.
-        val indexNote: Int = getIndexNoteById(idNote)
-        return (notes.getOrNull(indexNote) ?: throw SomethingWrongException("Такой записи нет")).copy()
+        return (notes.getOrNull(getIndexNoteById(idNote)) ?: throw SomethingWrongException("Такой записи нет")).copy()
     }
 
     fun getComments(): MutableList<Comment> {//Возвращает список комментариев к заметке.(не удаленных)
@@ -349,10 +348,6 @@ object NoteService {
         }
         return notDeletedComments
     }
-
-//    fun getFriendsNotes() {
-//        TODO()
-//    }//Возвращает список заметок друзей пользователя.
 
     fun restoreComment(idComment: Int) {// Восстанавливает удаленный комментарий
         val indexComment = getIndexCommentById(idComment)
@@ -376,21 +371,27 @@ object NoteService {
 
     private fun getIndexNoteById(idNote: Int): Int { //возврат индекса записи в коллекции
         var indexNote: Int = 0
+        var isExist:Boolean = false
         for (note in notes) {
             if (note.id == idNote) {
                 indexNote = notes.indexOf(note)
-            } else throw SomethingWrongException("Такой записи нет")
+                isExist = true
+            }
         }
+        if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
         return indexNote
     }
 
     private fun getIndexCommentById(idComment: Int): Int { //возврат индекса комментария записи в коллекции
         var indexComment: Int = 0
+        var isExist: Boolean = false
         for (comment in noteComments) {
             if (comment.id == idComment) {
                 indexComment = noteComments.indexOf(comment)
-            } else throw SomethingWrongException("Такого комментария нет")
+                isExist = true
+            }
         }
+        if (!isExist) throw SomethingWrongException("Такого комментария !!!")
         return indexComment
     }
 }
