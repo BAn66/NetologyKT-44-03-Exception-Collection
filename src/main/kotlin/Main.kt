@@ -167,7 +167,7 @@ data class Note(
     val date: LocalDate = LocalDate.now(),
     val comments: Int = 0,
     val readComments: Int = 0,
-    val viewUrl: URL = URL("localhost"),
+    //val viewUrl: URL = URL("localhost"),
     val privacyView: Boolean = true,
     val canComment: Boolean = true,
     val textWiki: String = "_"
@@ -175,7 +175,7 @@ data class Note(
 
 data class Comment(
     var id: Int = 0,
-    val fromId: Int = 0,
+    var fromId: Int = 0,
     val date: LocalDate = LocalDate.now(),
     var text: String = "empty comment",
 //    val donut: Donut = Donut(),
@@ -268,32 +268,35 @@ object WallService {
     fun clear() {
         posts = emptyArray()
         uniqId = 0// также здесь нужно сбросить счетчик для id постов, если он у вас используется
+        reportComments = emptyArray()
+        uniqIdComment = 0
     }
 }
 
 object NoteService {
-
     private var notes = mutableListOf<Note>()
-
     private var uniqId: Int = 0
     private var noteComments = mutableListOf<Comment>()
     private var uniqIdComment = 0
 
-    fun add(note: Note) {
+    fun add(note: Note): Note {//Создает новую заметку у текущего пользователя.
         uniqId++
         note.id = uniqId
-        note.text = "Примечание #$uniqId"
+        note.text = "Записочка #$uniqId"
         notes.add(note.copy())
-    }//Создает новую заметку у текущего пользователя.
+        return notes.last()
+    }
 
-    fun createComment(comment: Comment) {
+    fun createComment(comment: Comment, fromIdNote: Int): Comment {//Добавляет новый комментарий к заметке.
         uniqIdComment++
         comment.id = uniqIdComment
+        comment.fromId = fromIdNote
         comment.text = "Комментарий #$uniqId"
         noteComments.add(comment.copy())
-    }//Добавляет новый комментарий к заметке.
+        return noteComments.last()
+    }
 
-    fun delete(idNote: Int) {
+    fun delete(idNote: Int) {//Удаляет заметку текущего пользователя.
         var indexNote: Int = 0
         for (note in notes) {
             if (note.id == idNote) {
@@ -301,60 +304,67 @@ object NoteService {
             } else throw SomethingWrongException("Такой записи нет")
         }
         notes.removeAt(indexNote)
-    }//Удаляет заметку текущего пользователя.
+    }
 
-    fun deleteComment(idComment: Int) {
+    fun deleteComment(idComment: Int) {//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
         for (comment in noteComments) {
             if (comment.id == idComment) {
                 comment.isDeleted = true
             } else throw SomethingWrongException("Такого комментария нет")
         }
-    }//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
+    }
 
-    fun edit(idNote: Int, newText: String) {
-        var indexNote: Int = 0
-        for (note in notes) {
-            if (note.id == idNote) {
-                indexNote = notes.indexOf(note)
-            }
-        }
-        (notes.getOrNull(indexNote) ?: throw SomethingWrongException("Такого комментария нет")).text = newText
-    }//Редактирует заметку текущего пользователя, заменяет текст
+    fun edit(idNote: Int, newText: String) {//Редактирует заметку текущего пользователя, заменяет текст
+        val indexNote: Int = getIndexNoteById(idNote)
+        val editedComment = getById(idNote)
+        editedComment.text = newText
+        notes[indexNote] = editedComment
+    }
 
-    fun editComment(idComment: Int, newText: String) {
-        var editedComment =
-            (comments.getOrNull(idComment) ?: throw SomethingWrongException("Такого комментария нет")).copy()
+    fun editComment(idComment: Int, newText: String) {//Редактирует указанный комментарий у заметки.
+        val indexEditedComment = getIndexCommentById(idComment)
+        val editedComment = (noteComments.getOrNull(indexEditedComment)
+            ?: throw SomethingWrongException("Такого комментария нет")).copy()
         if (!editedComment.isDeleted) {
             editedComment.text = newText
-            comments[idComment] = editedComment
+            noteComments[indexEditedComment] = editedComment
         } else throw SomethingWrongException("Данный комментарий удален")
-    }//Редактирует указанный комментарий у заметки.
+    }
 
-    fun get(): MutableList<Note> {
+    fun get(): MutableList<Note> {//Возвращает список заметок, созданных пользователем.
         return notes
-    }//Возвращает список заметок, созданных пользователем.
+    }
 
-    fun getById(idNote: Int): Note {
-        var indexNote: Int = 0
-        for (note in notes) {
-            if (note.id == idNote) {
-                indexNote = notes.indexOf(note)
-            } else throw SomethingWrongException("Такой записи нет")
+    fun getById(idNote: Int): Note {//Возвращает заметку по её id.
+        val indexNote: Int = getIndexNoteById(idNote)
+        return (notes.getOrNull(indexNote) ?: throw SomethingWrongException("Такой записи нет")).copy()
+    }
+
+    fun getComments(): MutableList<Comment> {//Возвращает список комментариев к заметке.(не удаленных)
+        var notDeletedComments: MutableList<Comment> = mutableListOf<Comment>()
+        for (comment in noteComments) {
+            if (!comment.isDeleted) {
+                notDeletedComments.add(comment)
+            }
         }
-        return notes.getOrNull(indexNote) ?: throw SomethingWrongException("Такой записи нет")
-    }//Возвращает заметку по её id.
+        return notDeletedComments
+    }
 
-    fun getComments() {
-        TODO()
-    }//Возвращает список комментариев к заметке.
+//    fun getFriendsNotes() {
+//        TODO()
+//    }//Возвращает список заметок друзей пользователя.
 
-    fun getFriendsNotes() {
-        TODO()
-    }//Возвращает список заметок друзей пользователя.
-
-    fun restoreComment() {
-        TODO()
-    }//
+    fun restoreComment(idComment: Int) {// Восстанавливает удаленный комментарий
+        val indexComment = getIndexCommentById(idComment)
+        val restoreComment =
+            (noteComments.getOrNull(indexComment) ?: throw SomethingWrongException("Такого комментария нет")).copy()
+        if (restoreComment.isDeleted) {
+            restoreComment.isDeleted = false
+            noteComments[indexComment] = restoreComment
+        } else {
+            throw SomethingWrongException("Данный комментарий не удален")
+        }
+    }
 
     fun clear() {
         notes.removeAll(notes)
@@ -364,7 +374,7 @@ object NoteService {
         // также здесь нужно сбросить счетчик для id постов, если он у вас используется
     }
 
-    fun getIndexNoteById(idNote: Int): Int {
+    private fun getIndexNoteById(idNote: Int): Int { //возврат индекса записи в коллекции
         var indexNote: Int = 0
         for (note in notes) {
             if (note.id == idNote) {
@@ -374,12 +384,12 @@ object NoteService {
         return indexNote
     }
 
-    fun getIndexCommentById(idComment: Int): Int {
+    private fun getIndexCommentById(idComment: Int): Int { //возврат индекса комментария записи в коллекции
         var indexComment: Int = 0
         for (comment in noteComments) {
             if (comment.id == idComment) {
                 indexComment = noteComments.indexOf(comment)
-            } else throw SomethingWrongException("Такой записи нет")
+            } else throw SomethingWrongException("Такого комментария нет")
         }
         return indexComment
     }

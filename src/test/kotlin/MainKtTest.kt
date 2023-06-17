@@ -34,7 +34,6 @@ class WallServiceTest {
         postBeforeAdd.text = "Update Record" //измененный исходный пост
         val isUpdate:Boolean = WallService.update(postBeforeAdd)//меняем данные поста в массиве
         //assert
-        println(isUpdate)
         assertTrue(isUpdate) //пост нашелся, текст изменен
     }
 
