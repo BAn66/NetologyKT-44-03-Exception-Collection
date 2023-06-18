@@ -281,23 +281,25 @@ object NoteService {
 
     fun add(note: Note): Note {//Создает новую заметку у текущего пользователя.
         uniqId++
-        note.id = uniqId
-        note.text = "Записочка #$uniqId"
-        notes.add(note.copy())
+        //note.id = uniqId // Это нельзя потому что заменяет данные входного объекта
+        //note.text = "Записочка #$uniqId" // А нам надо в нотес добавить свой объект с своими изменениями
+
+        notes.add(note.copy(id = uniqId, text = "Записочка #$uniqId"))
         return notes.last()
     }
 
     fun createComment(comment: Comment, fromIdNote: Int): Comment {//Добавляет новый комментарий к заметке.
         uniqIdComment++
-        comment.id = uniqIdComment
-        comment.fromId = fromIdNote
-        comment.text = "Комментарий #$uniqId"
-        noteComments.add(comment.copy())
+         val createComment: Comment = comment.copy()
+        createComment.id = uniqIdComment
+        createComment.fromId = fromIdNote
+        createComment.text = "Комментарий #$uniqId"
+        noteComments.add(createComment)
         return noteComments.last()
     }
 
     fun delete(idNote: Int): Boolean {//Удаляет заметку текущего пользователя и НАВСЕГДА удаляет из массива комментарии к этой записи)
-        var indexNote: Int = getIndexNoteById(idNote)
+        val indexNote: Int = getIndexById(idNote, notes)
 
         val newCommentsList: MutableList<Comment> = mutableListOf<Comment>()
 
@@ -310,18 +312,18 @@ object NoteService {
         return notes.remove(notes[indexNote])
     }
     fun deleteComment(idComment: Int) {//Удаляет комментарий к заметке, а именно помечает комментарий как удаленный
-        noteComments[getIndexCommentById(idComment)].isDeleted = true
+        noteComments[getIndexById(idComment, noteComments)].isDeleted = true
     }
 
     fun edit(idNote: Int, newText: String) {//Редактирует заметку текущего пользователя, заменяет текст
-        val indexNote: Int = getIndexNoteById(idNote)
+        val indexNote: Int = getIndexById(idNote, notes)
         val editedComment = getById(idNote)
         editedComment.text = newText
         notes[indexNote] = editedComment
     }
 
     fun editComment(idComment: Int, newText: String) {//Редактирует указанный комментарий у заметки.
-        val indexEditedComment = getIndexCommentById(idComment)
+        val indexEditedComment = getIndexById(idComment, noteComments)
         val editedComment = noteComments[indexEditedComment].copy()
         if (!editedComment.isDeleted) {
             editedComment.text = newText
@@ -336,11 +338,11 @@ object NoteService {
     }
 
     fun getById(idNote: Int): Note {//Возвращает заметку по её id.
-        return (notes.getOrNull(getIndexNoteById(idNote)) ?: throw SomethingWrongException("Такой записи нет")).copy()
+        return (notes.getOrNull(getIndexById(idNote, notes)) ?: throw SomethingWrongException("Такой записи нет")).copy()
     }
 
     fun getComments(): MutableList<Comment> {//Возвращает список комментариев к заметке.(не удаленных)
-        var notDeletedComments: MutableList<Comment> = mutableListOf<Comment>()
+        val notDeletedComments: MutableList<Comment> = mutableListOf<Comment>()
         for (comment in noteComments) {
             if (!comment.isDeleted) {
                 notDeletedComments.add(comment)
@@ -350,7 +352,7 @@ object NoteService {
     }
 
     fun restoreComment(idComment: Int) {// Восстанавливает удаленный комментарий
-        val indexComment = getIndexCommentById(idComment)
+        val indexComment = getIndexById(idComment, noteComments)
         val restoreComment =
             (noteComments.getOrNull(indexComment) ?: throw SomethingWrongException("Такого комментария нет")).copy()
         if (restoreComment.isDeleted) {
@@ -369,30 +371,27 @@ object NoteService {
         // также здесь нужно сбросить счетчик для id постов, если он у вас используется
     }
 
-    private fun getIndexNoteById(idNote: Int): Int { //возврат индекса записи в коллекции
-        var indexNote: Int = 0
+    private fun <T> getIndexById(id: Int, list: MutableList<T>): Int { //возврат индекса записи в коллекции
+        var index: Int = 0
         var isExist:Boolean = false
-        for (note in notes) {
-            if (note.id == idNote) {
-                indexNote = notes.indexOf(note)
-                isExist = true
-            }
-        }
-        if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
-        return indexNote
-    }
 
-    private fun getIndexCommentById(idComment: Int): Int { //возврат индекса комментария записи в коллекции
-        var indexComment: Int = 0
-        var isExist: Boolean = false
-        for (comment in noteComments) {
-            if (comment.id == idComment) {
-                indexComment = noteComments.indexOf(comment)
-                isExist = true
+        for (element in list) {
+            when(element){
+                is Note -> if (element.id == id) {
+                    index = list.indexOf(element)
+                    isExist = true
+                }
+                is Comment -> if (element.id == id) {
+                    index = list.indexOf(element)
+                    isExist = true
+                }
+                else -> throw SomethingWrongException("Задан неверный список записей или комментариев")
             }
         }
-        if (!isExist) throw SomethingWrongException("Такого комментария !!!")
-        return indexComment
+
+
+        if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
+        return index
     }
 }
 
