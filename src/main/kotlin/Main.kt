@@ -80,6 +80,10 @@ data class Post(
     class Geo {}
 }
 
+interface Identifiable{
+    var id: Int
+}
+
 open abstract class Attachments(
     open val type: String
 )
@@ -160,7 +164,7 @@ class Doc(
 ) {}
 
 data class Note(
-    var id: Int = 0,
+    override var id: Int = 0,
     val ownerId: Int = 0,
     val title: String = "empty tittle",
     var text: String = "empty text",
@@ -171,10 +175,10 @@ data class Note(
     val privacyView: Boolean = true,
     val canComment: Boolean = true,
     val textWiki: String = "_"
-) {}
+) : Identifiable{}
 
 data class Comment(
-    var id: Int = 0,
+    override var id: Int = 0,
     var fromId: Int = 0,
     val date: LocalDate = LocalDate.now(),
     var text: String = "empty comment",
@@ -185,7 +189,7 @@ data class Comment(
     val parentsStack: Array<Int> = emptyArray<Int>(),
     val threadComments: ThreadComments = ThreadComments(),
     var isDeleted: Boolean = false
-) {
+) : Identifiable {
     class ThreadComments(
         val count: Int = 0,
         val items: Array<Comment> = emptyArray<Comment>(),
@@ -370,26 +374,40 @@ object NoteService {
         uniqIdComment = 0
         // также здесь нужно сбросить счетчик для id постов, если он у вас используется
     }
+//Старая версия метода с дженериками
+//    private fun <T> getIndexById(id: Int, list: MutableList<T>): Int { //возврат индекса записи в коллекции
+//        var index: Int = 0
+//        var isExist: Boolean = false
+//
+//        for (element in list) {
+//            when (element) {
+//                is Note -> if (element.id == id) {
+//                    index = list.indexOf(element)
+//                    isExist = true
+//                }
+//
+//                is Comment -> if (element.id == id) {
+//                    index = list.indexOf(element)
+//                    isExist = true
+//                }
+//
+//                else -> throw SomethingWrongException("Задан неверный список записей или комментариев")
+//            }
+//        }
+//        if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
+//        return index
+//    }
 
-    private fun <T> getIndexById(id: Int, list: MutableList<T>): Int { //возврат индекса записи в коллекции
+    //для работы этого метода добавлен интерфейс Identifiable, чтобы не прописывать when
+    private fun <T:Identifiable> getIndexById(id: Int, list: MutableList<T>): Int { //возврат индекса записи в коллекции
         var index: Int = 0
         var isExist:Boolean = false
-
         for (element in list) {
-            when(element){
-                is Note -> if (element.id == id) {
+            if (element.id == id) {
                     index = list.indexOf(element)
                     isExist = true
                 }
-                is Comment -> if (element.id == id) {
-                    index = list.indexOf(element)
-                    isExist = true
-                }
-                else -> throw SomethingWrongException("Задан неверный список записей или комментариев")
-            }
         }
-
-
         if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
         return index
     }
