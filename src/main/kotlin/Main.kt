@@ -1,4 +1,5 @@
 import java.net.URL
+import java.security.MessageDigest
 import java.time.*
 
 fun main(args: Array<String>) {
@@ -214,6 +215,72 @@ data class ReportComment(
         SUICAID(8)
     }
 }
+data class Chat(
+    override var id: Int,
+    var lastUniqId:Int = 0,
+    val idOwner: Int,
+    var messages: MutableList<DirectMessages> = mutableListOf<DirectMessages>()
+) : Identifiable  { data class DirectMessages(
+        override var id: Int,
+        val idSender: Int = 0,
+        val idRecipient: Int = 0,
+        var text: String = "",
+        var isRead: Boolean = false
+    ): Identifiable
+}
+
+object ChatService{
+    var chats = mutableListOf<Chat>()
+    var uniqIdChat = 0
+
+    //Видеть, сколько чатов не прочитано (например, service.getUnreadChatsCount).
+    // В каждом из таких чатов есть хотя бы одно непрочитанное сообщение.
+    fun getUnreadChatsCount(idOwner: Int){
+        chats.filter {it.idOwner == idOwner}.filter{ (it.messages.filter { !it.isRead }).isNotEmpty() }
+    }
+
+    //Получить список чатов
+    fun getChats(idOwner: Int) : MutableList<Chat>{
+       return chats.filter {it.idOwner == idOwner}.toMutableList()
+    }
+
+    //Получить список сообщений из чата
+    fun getMessages(idChat: Int, idLastReadMessages: Int, quantityMessage: Int) : MutableList<Chat.DirectMessages>{
+        val messages = chats.filter { it.id == idChat }[0].messages.filter { it.id >= idLastReadMessages}.toMutableList()
+        val messagesToRead = messages.filter {messages.indexOf(it) <= quantityMessage}.toMutableList()
+        chats.filter { it.id == idChat }[0].messages.filter { it.id >= idLastReadMessages && it.id <= messagesToRead.last().id }.forEach{ it.isRead = true }
+        return messagesToRead
+    }
+
+    fun createMessage(idUser: Int, idTo: Int, idChat: Int, text:String): Chat.DirectMessages{
+        chats[getIndexById(idChat,chats)].lastUniqId++
+        val mess = Chat.DirectMessages(chats[getIndexById(idChat,chats)].lastUniqId,idUser, idTo, text)
+        chats[getIndexById(idChat,chats)].messages.add(mess)
+        return chats[getIndexById(idChat,chats)].messages.last()
+    }
+    fun editMessage(idChat: Int, idMessage: Int, text:String){
+        val messagesForEdit = chats[getIndexById(idChat,chats)].messages
+        messagesForEdit[getIndexById(idMessage,messagesForEdit)].text = text
+        chats[getIndexById(idChat,chats)].messages = messagesForEdit
+    }
+    fun deleteMessage(idChat: Int, idMessage: Int){
+        val messagesForEdit = chats[getIndexById(idChat,chats)].messages
+        messagesForEdit.remove(messagesForEdit[getIndexById(idMessage, messagesForEdit)])
+        chats[getIndexById(idChat,chats)].messages = messagesForEdit
+    }
+
+    fun createChat(idUser: Int, idRecipient: Int, firstMessage: String): Chat{
+        var messages = mutableListOf<Chat.DirectMessages>()
+        uniqIdChat++
+        chats.add(Chat(uniqIdChat, idOwner = idUser, messages = messages))
+        createMessage(idUser, idRecipient, uniqIdChat, firstMessage)
+        return chats.last()
+    }
+
+    fun deleteChat(idChat: Int):Boolean{
+        return chats.remove(chats[getIndexById(idChat, chats)])
+    }
+}
 
 object WallService {
     private var posts = emptyArray<Post>() //массив хранения постов
@@ -399,18 +466,19 @@ object NoteService {
 //    }
 
     //для работы этого метода добавлен интерфейс Identifiable, чтобы не прописывать when
-    private fun <T:Identifiable> getIndexById(id: Int, list: MutableList<T>): Int { //возврат индекса записи в коллекции
-        var index: Int = 0
-        var isExist:Boolean = false
-        for (element in list) {
-            if (element.id == id) {
-                    index = list.indexOf(element)
-                    isExist = true
-                }
+
+}
+fun <T:Identifiable> getIndexById(id: Int, list: MutableList<T>): Int { //возврат индекса записи в коллекции
+    var index: Int = 0
+    var isExist:Boolean = false
+    for (element in list) {
+        if (element.id == id) {
+            index = list.indexOf(element)
+            isExist = true
         }
-        if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
-        return index
     }
+    if (!isExist) throw SomethingWrongException("Такой записи нет!!!")
+    return index
 }
 
 class PostNotFoundException(message: String) : SomethingWrongException(message)
