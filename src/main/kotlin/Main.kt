@@ -238,15 +238,11 @@ object ChatService {
     //Видеть, сколько чатов не прочитано (например, service.getUnreadChatsCount).
     // В каждом из таких чатов есть хотя бы одно непрочитанное сообщение.
     fun getUnreadChatsCount(idUser: Int): Int {
-
         return chats.filter { it ->
             (it.messages.filter { !it.isRead }).isNotEmpty()
         }.filter { it ->
             (it.messages.filter { it.idSender==idUser }).isNotEmpty()
         }.size
-
-
-
     }
 
     //Получить список чатов
@@ -295,10 +291,14 @@ object ChatService {
     }
 
     fun deleteChat(idChat: Int): Boolean {
+        chats[getIndexById(idChat, chats)].messages.removeAll(chats[getIndexById(idChat, chats)].messages)
         return chats.remove(chats[getIndexById(idChat, chats)])
     }
 
     fun clear() {
+        for (chat in chats){
+            chat.messages.removeAll(chat.messages)
+        }
         chats.removeAll(chats)
         uniqIdChat = 0
         // также здесь нужно сбросить счетчик для id постов, если он у вас используется
