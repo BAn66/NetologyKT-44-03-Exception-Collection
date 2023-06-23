@@ -51,7 +51,42 @@ class ChatServiceTest {
         assertEquals(1, chatsOwner1[0].idOwner)
         assertEquals(1, chatsOwner1[1].idOwner)
     }
+    @Test
+    fun getLastMessages(){
+        //assert
+        val chat1:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 1")
+        val mess1Chat1 = ChatService.createMessage(2, 1, 1, "2: Я прочитал сообщение №1 в чате 1")
+        val mess2Chat1 = ChatService.createMessage(1, 2, 1, "1: Я прочитал сообщение №1 от 2 в чате 1")
+        ChatService.getMessages(1, 0,3) //все прочитаны
+        val chat2:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 2")
+        val mess1Chat2 = ChatService.createMessage(2, 1, 2, "2: Я прочитал сообщение №1 в чате 2")
+        val mess2Chat2 = ChatService.createMessage(1, 2, 2, "1: Я не прочитал сообщение №1 от 2 в чате 2")
+        ChatService.getMessages(2, 0,2) // 1 не прочитано (1 от 1 пользв)
+        val chat3:Chat = ChatService.createChat(idUser = 2, idRecipient = 1, firstMessage = "Ты тут?, это сообщение 1 от 2 в чате 3")
+        val mess1Chat3 = ChatService.createMessage(1, 2, 3, "2: Я не прочитал сообщение №1 в чате 3")
+        val mess2Chat3 = ChatService.createMessage(2, 1, 3, "1: Я не прочитал сообщение №1 от 2 в чате 3")
+        ChatService.getMessages(3, 1,2) // 2 не прочитано вообще (1 от 1 пользв)
+        val chat4:Chat = ChatService.createChat(idUser = 2, idRecipient = 1, firstMessage = "Ты тут?, это сообщение 1 от 2 в чате 4")
+        val mess1Chat4 = ChatService.createMessage(1, 2, 4, "2: Я не прочитал сообщение №1 в чате 4")
+        val mess2Chat4 = ChatService.createMessage(2, 1, 4, "1: Я не прочитал сообщение №1 от 2 в чате 4")
+        //вообще все не прочитаны (1 от 1 пользв)
+        //act
+        val list = ChatService.getLastMessages()
+        //assert
+        assertEquals(4, list.size)
+        assertEquals("1: Я не прочитал сообщение №1 от 2 в чате 4", list[3])
+    }
 
+    @Test(expected = SomethingWrongException::class)
+    fun getNoMessages(){
+        //assert
+        val chat1:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 1")
+        ChatService.deleteMessage(1, 1)
+        val chat2:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 2")
+        ChatService.deleteMessage(2, 1)
+        //act
+        val list = ChatService.getLastMessages()
+    }
     @Test
     fun getMessages() {
         //arrange

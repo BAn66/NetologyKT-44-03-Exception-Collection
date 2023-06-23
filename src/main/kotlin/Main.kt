@@ -239,9 +239,9 @@ object ChatService {
     // В каждом из таких чатов есть хотя бы одно непрочитанное сообщение.
     fun getUnreadChatsCount(idUser: Int): Int {
         return chats.filter { it ->
-            (it.messages.filter { !it.isRead }).isNotEmpty()
+            (it.messages.filter { message ->!message.isRead }).isNotEmpty()
         }.filter { it ->
-            (it.messages.filter { it.idSender==idUser }).isNotEmpty()
+            (it.messages.filter { message -> message.idSender==idUser }).isNotEmpty()
         }.size
     }
 
@@ -255,13 +255,23 @@ object ChatService {
         this.filter { it.id in (idStart + 1)..idEnd }.forEach { it.isRead = true }
     }
 
+    //Получить список сообщений из чата(список строк), или вывести сообщения "Нет сообщения"
+    fun getLastMessages():MutableList<String>{
+        var list:MutableList<String> = mutableListOf()
+        chats.filter { it.messages.size > 0 }.forEach {list.add(it.messages.last().text)}
+        if(list.isEmpty()) throw SomethingWrongException("Нет сообщений ни в одном из чатов")
+        return list
+    }
+
     //Получить список сообщений из чата
-    fun getMessages(idChat: Int, idLastReadMessages: Int, quantityMessage: Int): MutableList<Chat.DirectMessages> {
-        val messages = chats.filter { it.id == idChat }[0].messages.filter { it.id > idLastReadMessages }.toMutableList()
+    fun getMessages(idChat: Int, idLastMessages: Int, quantityMessage: Int): MutableList<Chat.DirectMessages> {
+        val messages = chats.filter { it.id == idChat }[0].messages.filter { it.id > idLastMessages }.toMutableList()
         val messagesToRead = messages.filter { messages.indexOf(it) <= quantityMessage - 1 }.toMutableList()
-        chats.filter { it.id == idChat }[0].messages.markRead(idLastReadMessages, messagesToRead.last().id)
+        chats.filter { it.id == idChat }[0].messages.markRead(idLastMessages, messagesToRead.last().id)
         return messagesToRead
     }
+
+
 
     fun createMessage(idUser: Int, idTo: Int, idChat: Int, text: String): Chat.DirectMessages {
         chats[getIndexById(idChat, chats)].lastUniqId++
