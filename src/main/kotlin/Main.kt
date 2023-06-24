@@ -254,13 +254,16 @@ object ChatService {
     private fun MutableList<Chat.DirectMessages>.markRead(idStart: Int, idEnd: Int) {
         this.filter { it.id in (idStart + 1)..idEnd }.forEach { it.isRead = true }
     }
-    fun getLastMessages(): Any {
+
+    fun getLastMessages(): MutableList<String> {
         val list: MutableList<String> = mutableListOf()
-        chats.filter { it.messages.size > 0 }.forEach { list.add(it.messages.last().text) }
-        return list.ifEmpty {
-            "Нет сообщений ни в одном из чатов"
+        chats.forEach {
+            if (it.messages.size > 0) list.add("Чат " + it.id + ": " + it.messages.last().text)
+            else list.add("Чат " + it.id + ": Нет сообщений")
         }
+        return list
     }
+
     //Получить список сообщений из чата
     fun getMessages(idChat: Int, idLastMessages: Int, quantityMessage: Int): MutableList<Chat.DirectMessages> {
         val messages = chats.filter { it.id == idChat }[0].messages.filter { it.id > idLastMessages }.toMutableList()
