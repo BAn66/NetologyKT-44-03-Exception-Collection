@@ -1,8 +1,6 @@
 import org.junit.Test
-
 import org.junit.Assert.*
 import org.junit.Before
-import javax.lang.model.util.Elements.Origin
 
 class ChatServiceTest {
     @Before
@@ -70,14 +68,22 @@ class ChatServiceTest {
         val mess1Chat4 = ChatService.createMessage(1, 2, 4, "2: Я не прочитал сообщение №1 в чате 4")
         val mess2Chat4 = ChatService.createMessage(2, 1, 4, "1: Я не прочитал сообщение №1 от 2 в чате 4")
         //вообще все не прочитаны (1 от 1 пользв)
+
+        val listExpected = mutableListOf<String>()
+        listExpected.add("1: Я прочитал сообщение №1 от 2 в чате 1")
+        listExpected.add("1: Я не прочитал сообщение №1 от 2 в чате 2")
+        listExpected.add("1: Я не прочитал сообщение №1 от 2 в чате 3")
+        listExpected.add("1: Я не прочитал сообщение №1 от 2 в чате 4")
         //act
-        val list = ChatService.getLastMessages()
+        val list: MutableList<String> = ChatService.getLastMessages() as MutableList<String>
+
         //assert
+        assertEquals(listExpected, list)
         assertEquals(4, list.size)
         assertEquals("1: Я не прочитал сообщение №1 от 2 в чате 4", list[3])
     }
 
-    @Test(expected = SomethingWrongException::class)
+@Test
     fun getNoMessages(){
         //assert
         val chat1:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 1")
@@ -85,8 +91,12 @@ class ChatServiceTest {
         val chat2:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 2")
         ChatService.deleteMessage(2, 1)
         //act
-        val list = ChatService.getLastMessages()
+        val str = ChatService.getLastMessages()
+        //assert
+        assertEquals("Нет сообщений ни в одном из чатов", str)
+
     }
+
     @Test
     fun getMessages() {
         //arrange
