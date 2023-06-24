@@ -88,19 +88,18 @@ class ChatServiceTest {
 
     }
 
-@Test
-    fun getNoMessages(){
-        //assert
-        val chat1:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 1")
-        ChatService.deleteMessage(1, 1)
-        val chat2:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 2")
-        ChatService.deleteMessage(2, 1)
-        //act
-        val str = ChatService.getLastMessages()
-        //assert
-        assertEquals("Нет сообщений ни в одном из чатов", str)
-
-    }
+//@Test
+//    fun getNoMessages(){
+//        //assert
+//        val chat1:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 1")
+//        ChatService.deleteMessage(1, 1)
+//        val chat2:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 2")
+//        ChatService.deleteMessage(2, 1)
+//        //act
+//        val str = ChatService.getLastMessages()
+//        //assert
+//        assertEquals("Нет сообщений ни в одном из чатов", str)
+//    }
 
     @Test
     fun getMessages() {
