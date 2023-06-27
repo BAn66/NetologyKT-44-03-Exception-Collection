@@ -68,23 +68,23 @@ class ChatServiceTest {
         val mess1Chat4 = ChatService.createMessage(1, 2, 4, "2: Я не прочитал сообщение №1 в чате 4")
         val mess2Chat4 = ChatService.createMessage(2, 1, 4, "1: Я не прочитал сообщение №1 от 2 в чате 4")
         //вообще все не прочитаны (1 от 1 пользв)
-        val chat5:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 1")
+        val chat5:Chat = ChatService.createChat(idUser = 1, idRecipient = 2, firstMessage = "Привет, я сообщение 2 от 1 в чате 5")
         ChatService.deleteMessage(5, 1)
 
         val listExpected = mutableListOf<String>()
-        listExpected.add("Чат 1: 1: Я прочитал сообщение №1 от 2 в чате 1")
-        listExpected.add("Чат 2: 1: Я не прочитал сообщение №1 от 2 в чате 2")
-        listExpected.add("Чат 3: 1: Я не прочитал сообщение №1 от 2 в чате 3")
-        listExpected.add("Чат 4: 1: Я не прочитал сообщение №1 от 2 в чате 4")
-        listExpected.add("Чат 5: Нет сообщений")
+        listExpected.add("1: Я прочитал сообщение №1 от 2 в чате 1")
+        listExpected.add("1: Я не прочитал сообщение №1 от 2 в чате 2")
+        listExpected.add("1: Я не прочитал сообщение №1 от 2 в чате 3")
+        listExpected.add("1: Я не прочитал сообщение №1 от 2 в чате 4")
+        listExpected.add("Нет сообщений")
         //act
-        val list: MutableList<String> = ChatService.getLastMessages()
+        val list = ChatService.getLastMessages()
 
         //assert
         assertEquals(listExpected, list)
         assertEquals(5, list.size)
-        assertEquals("Чат 4: 1: Я не прочитал сообщение №1 от 2 в чате 4", list[3])
-        assertEquals("Чат 5: Нет сообщений", list[4])
+        assertEquals("1: Я не прочитал сообщение №1 от 2 в чате 4", list[3])
+        assertEquals("Нет сообщений", list[4])
 
     }
 
